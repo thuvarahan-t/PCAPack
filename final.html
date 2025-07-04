@@ -373,8 +373,9 @@
 
   <div id="notification" class="notification"></div>
 
-  <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbztGmNHHhuo5-pNS2-DfCwZZz-hUrKhqeGc2lT8VOBycseWJOEwKVZrdYD-Xa0LtpxO/exec';
+<script>
+  // Replace this URL with your actual deployed Apps Script URL!
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5JFEWb56mIInLjV5PQpS3GFSAxc4djsc0g2DhUYN99ECi6ly3r2u4s3n2jN2tIId-/exec';
 
 let packages = [];
 let studentRecords = [];
@@ -445,6 +446,7 @@ async function assignStudentPackage(studentData) {
     showNotification('Please fill in all fields.', 'error');
     return false;
   }
+  // No client-side date, server will set correct Sri Lankan date
   const result = await callBackend({ action: 'assignPackage', studentData });
   if (result && result.success) {
     showNotification(result.message);
@@ -515,7 +517,7 @@ function updateStats() {
   });
 }
 
-// 👉 Data modification
+// Data modification
 document.getElementById('searchModifyBtn').addEventListener('click', async () => {
   const regId = document.getElementById('modifySearchId').value;
   if (!regId) {
@@ -627,7 +629,7 @@ async function saveStudentUpdate(original, parent) {
   }
 }
 
-// 👉 Reports
+// Reports
 document.getElementById('generateReportBtn').addEventListener('click', async () => {
   const regId = document.getElementById('reportSearchId').value;
   const result = await callBackend({ action: 'searchStudent', registrationId: regId });
@@ -665,40 +667,20 @@ function renderReportResults(data) {
   });
 }
 
-// Date format helper for US-style dates
-function formatSheetDate(dateStr) {
-  if (!dateStr) return '';
-  const [year, month, day] = dateStr.split("-");
-  return `${month}/${day}/${year}`;
-}
-
-// 👉 Date Report
-
+// Date Report -- now using backend for robust Sri Lankan date matching
 document.getElementById('generateDateReportBtn').addEventListener('click', async () => {
   const date = document.getElementById('dateReportInput').value;
   if (!date) {
     showNotification('Please select a date.', 'error');
     return;
   }
+  // Always send yyyy-MM-dd (input type=date always returns this)
   const result = await callBackend({ action: 'searchByDate', date });
   if (result.success) {
     renderDateReportResults(result.data);
   } else {
     showNotification(result.message, 'error');
   }
-});
-
-document.getElementById('generateDateReportBtn').addEventListener('click', () => {
-  const date = document.getElementById('dateReportInput').value;
-  if (!date) {
-    showNotification('Please select a date.', 'error');
-    return;
-  }
-  // Try both formats for robust matching
-  const filtered = studentRecords.filter(r =>
-    r.date === date || r.date === formatSheetDate(date)
-  );
-  renderDateReportResults(filtered);
 });
 
 function renderDateReportResults(data) {
@@ -761,6 +743,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadAllData();
 });
-  </script>
+</script>
 </body>
 </html>
