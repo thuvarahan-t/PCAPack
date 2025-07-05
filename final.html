@@ -374,392 +374,423 @@
   <div id="notification" class="notification"></div>
 
   <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxoYhQXDAzkU9w6WANqTYxl4XMxPmzgfm-fcA9EVtVONOiUTiln5dtADtIbvofeZHgm/exec';
+    // !! IMPORTANT: Replace with your deployed Apps Script Web App URL !!
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz3WcbbpqMHpuDXgscgJMTS90wocpDEmYPOTrhg71OYzFpX7cKPRmZhnuyZEgclj_Hl/exec';
 
-let packages = [];
-let studentRecords = [];
-let loading = false;
+    let packages = [];
+    let studentRecords = [];
+    let loading = false;
 
-function showNotification(message, type = 'success') {
-  const notification = document.getElementById('notification');
-  notification.textContent = message;
-  notification.className = `notification ${type} show`;
-  setTimeout(() => {
-    notification.classList.remove('show');
-  }, 3000);
-}
-
-function setLoading(isLoading) {
-  loading = isLoading;
-  document.querySelectorAll('.btn').forEach(btn => btn.disabled = isLoading);
-}
-
-async function callBackend(data) {
-  try {
-    setLoading(true);
-    const res = await fetch(APPS_SCRIPT_URL, {
-      method: 'POST',
-      body: JSON.stringify(data)
-    });
-    if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-    return await res.json();
-  } catch (err) {
-    console.error('Backend error:', err);
-    showNotification('Connection to backend failed.', 'error');
-    throw err;
-  } finally {
-    setLoading(false);
-  }
-}
-
-async function loadAllData() {
-  const result = await callBackend({ action: 'getData' });
-  if (result && result.success) {
-    packages = result.data.packages.map(row => ({ id: row[0], name: row[1] }));
-    studentRecords = result.data.students;
-    updatePackageList();
-    updatePackageSelect();
-    updateStats();
-  } else if (result && result.message) {
-    showNotification(result.message, 'error');
-  }
-}
-
-async function addPackage(packageData) {
-  if (!packageData.id || !packageData.name) {
-    showNotification('Please fill in both Package ID and Package Name.', 'error');
-    return false;
-  }
-  const result = await callBackend({ action: 'addPackage', packageData });
-  if (result && result.success) {
-    showNotification(result.message);
-    return true;
-  } else {
-    showNotification(result.message, 'error');
-    return false;
-  }
-}
-
-async function assignStudentPackage(studentData) {
-  if (!studentData.registrationId || !studentData.packageName || !studentData.duration || !studentData.batch) {
-    showNotification('Please fill in all fields.', 'error');
-    return false;
-  }
-  // No client-side date, server will set correct Sri Lankan date
-  const result = await callBackend({ action: 'assignPackage', studentData });
-  if (result && result.success) {
-    showNotification(result.message);
-    return true;
-  } else {
-    showNotification(result.message, 'error');
-    return false;
-  }
-}
-
-function updatePackageList() {
-  const packageList = document.getElementById('packageList');
-  const packageCount = document.getElementById('packageCount');
-  packageCount.textContent = packages.length;
-  packageList.innerHTML = '';
-  if (packages.length === 0) {
-    packageList.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:2rem;">No packages available</p>';
-    return;
-  }
-  packages.forEach(pkg => {
-    const div = document.createElement('div');
-    div.className = 'package-item';
-    div.innerHTML = `
-      <div class="package-info">
-        <h4>${pkg.name}</h4>
-        <p>ID: ${pkg.id}</p>
-      </div>
-      <div class="stat-badge">Active</div>`;
-    packageList.appendChild(div);
-  });
-}
-
-function updatePackageSelect() {
-  const select = document.getElementById('studentPackage');
-  select.innerHTML = '<option value="">Select package</option>';
-  packages.forEach(pkg => {
-    const option = document.createElement('option');
-    option.value = pkg.name;
-    option.textContent = pkg.name;
-    select.appendChild(option);
-  });
-}
-
-function updateStats() {
-  const totalStudents = new Set(studentRecords.map(r => r.registrationId)).size;
-  const totalPackages = packages.length;
-  const totalAssignments = studentRecords.length;
-  document.getElementById('totalStudents').textContent = totalStudents;
-  document.getElementById('totalPackages').textContent = totalPackages;
-  document.getElementById('statTotalStudents').textContent = totalStudents;
-  document.getElementById('statTotalPackages').textContent = totalPackages;
-  document.getElementById('statTotalAssignments').textContent = totalAssignments;
-
-  const batchCounts = {};
-  ['2025 Batch', '2026 Batch', '2027 Batch'].forEach(batch => {
-    batchCounts[batch] = studentRecords.filter(r => r.batch === batch).length;
-  });
-  const batchDistribution = document.getElementById('batchDistribution');
-  batchDistribution.innerHTML = '';
-  Object.entries(batchCounts).forEach(([batch, count]) => {
-    const div = document.createElement('div');
-    div.style.display = 'flex';
-    div.style.justifyContent = 'space-between';
-    div.style.fontSize = '0.875rem';
-    div.style.marginBottom = '0.25rem';
-    div.innerHTML = `<span style="color:#d1d5db;">${batch}:</span><span style="font-weight:500;">${count}</span>`;
-    batchDistribution.appendChild(div);
-  });
-}
-
-// Helper: get only yyyy-MM-dd from date or ISO string, adjust for Sri Lanka local time if needed
-function getSriLankaDateOnly(dateStr) {
-  if (!dateStr) return '';
-  // If already yyyy-MM-dd, return as is
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return dateStr;
-  // If ISO string, convert to Sri Lanka local date
-  try {
-    const date = new Date(dateStr);
-    // Add 5h30min for Sri Lanka time (UTC+5:30)
-    date.setMinutes(date.getMinutes() + 330);
-    return date.toISOString().slice(0, 10);
-  } catch {
-    return dateStr;
-  }
-}
-
-// Data modification
-document.getElementById('searchModifyBtn').addEventListener('click', async () => {
-  const regId = document.getElementById('modifySearchId').value;
-  if (!regId) {
-    showNotification('Enter Registration ID', 'error');
-    return;
-  }
-  const result = await callBackend({ action: 'searchStudent', registrationId: regId });
-  if (result.success) {
-    renderModifyResults(result.data);
-  } else {
-    showNotification(result.message, 'error');
-  }
-});
-
-function renderModifyResults(data) {
-  const container = document.getElementById('modifyResults');
-  container.innerHTML = '';
-  if (data.length === 0) {
-    container.innerHTML = '<p style="color:#9ca3af;">No records found.</p>';
-    return;
-  }
-  data.forEach(record => {
-    // Create package options (from packages array)
-    let packageOptions = packages.map(pkg =>
-      `<option value="${pkg.name}"${pkg.name === record.packageName ? ' selected' : ''}>${pkg.name}</option>`
-    ).join('');
-    packageOptions = `<option value="">Select package</option>` + packageOptions;
-
-    // Duration options
-    const durations = ['3 months', '6 months', '9 months'];
-    let durationOptions = durations.map(d =>
-      `<option value="${d}"${d === record.duration ? ' selected' : ''}>${d}</option>`
-    ).join('');
-    durationOptions = `<option value="">Select duration</option>` + durationOptions;
-
-    // Batch options
-    const batches = ['2025 Batch', '2026 Batch', '2027 Batch'];
-    let batchOptions = batches.map(b =>
-      `<option value="${b}"${b === record.batch ? ' selected' : ''}>${b}</option>`
-    ).join('');
-    batchOptions = `<option value="">Select batch</option>` + batchOptions;
-
-    const div = document.createElement('div');
-    div.className = 'record-item';
-    div.innerHTML = `
-      <div class="record-grid">
-        <div class="record-field">
-          <h5>Registration ID</h5>
-          <input value="${record.registrationId}" data-field="registrationId" class="form-input" readonly>
-        </div>
-        <div class="record-field">
-          <h5>Package Name</h5>
-          <select data-field="packageName" class="form-select">
-            ${packageOptions}
-          </select>
-        </div>
-        <div class="record-field">
-          <h5>Duration</h5>
-          <select data-field="duration" class="form-select">
-            ${durationOptions}
-          </select>
-        </div>
-        <div class="record-field">
-          <h5>Batch</h5>
-          <select data-field="batch" class="form-select">
-            ${batchOptions}
-          </select>
-        </div>
-        <div class="record-field">
-          <h5>Date</h5>
-          <input value="${getSriLankaDateOnly(record.date)}" data-field="date" class="form-input">
-        </div>
-      </div>
-      <button class="btn btn-primary" onclick='saveStudentUpdate(${JSON.stringify(record).replace(/"/g, "&quot;")}, this.parentElement)'>Save</button>
-      <button class="btn btn-danger" onclick='deleteStudentRow("${record.registrationId}", this.parentElement)'>Delete</button>
-    `;
-    container.appendChild(div);
-  });
-}
-
-// Delete button handler
-async function deleteStudentRow(registrationId, container) {
-  if (!confirm("Are you sure you want to delete this record?")) return;
-  const result = await callBackend({ action: 'deleteStudent', registrationId });
-  if (result.success) {
-    showNotification(result.message);
-    container.remove();
-    await loadAllData();
-  } else {
-    showNotification(result.message, 'error');
-  }
-}
-
-async function saveStudentUpdate(original, parent) {
-  const updated = {
-    batch: parent.querySelector('[data-field="batch"]').value,
-    rowIndex: original.rowIndex,
-    registrationId: parent.querySelector('[data-field="registrationId"]').value,
-    packageName: parent.querySelector('[data-field="packageName"]').value,
-    duration: parent.querySelector('[data-field="duration"]').value,
-    date: getSriLankaDateOnly(parent.querySelector('[data-field="date"]').value)
-  };
-  const result = await callBackend({ action: 'updateStudent', updatedData: updated });
-  if (result.success) {
-    showNotification(result.message);
-    await loadAllData();
-  } else {
-    showNotification(result.message, 'error');
-  }
-}
-
-// Reports
-document.getElementById('generateReportBtn').addEventListener('click', async () => {
-  const regId = document.getElementById('reportSearchId').value;
-  const result = await callBackend({ action: 'searchStudent', registrationId: regId });
-  if (result.success) {
-    renderReportResults(result.data);
-  } else {
-    showNotification(result.message, 'error');
-  }
-});
-
-function getPackageIdByName(packageName) {
-  const pkg = packages.find(p => p.name === packageName);
-  return pkg ? pkg.id : '';
-}
-
-function renderReportResults(data) {
-  const container = document.getElementById('reportResults');
-  container.innerHTML = '';
-  if (data.length === 0) {
-    container.innerHTML = '<p style="color:#9ca3af;">No records found.</p>';
-    return;
-  }
-  data.forEach(record => {
-    const displayDate = getSriLankaDateOnly(record.date);
-    const div = document.createElement('div');
-    div.className = 'record-item';
-    div.innerHTML = `
-      <div class="record-grid">
-        <div class="record-field"><h5>Batch</h5><p>${record.batch}</p></div>
-        <div class="record-field"><h5>Reg ID</h5><p>${record.registrationId}</p></div>
-        <div class="record-field"><h5>Package</h5><p>${getPackageIdByName(record.packageName)}</p></div>
-        <div class="record-field"><h5>Duration</h5><p>${record.duration}</p></div>
-        <div class="record-field"><h5>Date</h5><p>${displayDate}</p></div>
-      </div>`;
-    container.appendChild(div);
-  });
-}
-
-// Date Report -- now using backend for robust Sri Lankan date matching
-document.getElementById('generateDateReportBtn').addEventListener('click', async () => {
-  const date = document.getElementById('dateReportInput').value;
-  if (!date) {
-    showNotification('Please select a date.', 'error');
-    return;
-  }
-  // Always send yyyy-MM-dd (input type=date always returns this)
-  const result = await callBackend({ action: 'searchByDate', date });
-  if (result.success) {
-    renderDateReportResults(result.data);
-  } else {
-    showNotification(result.message, 'error');
-  }
-});
-
-function renderDateReportResults(data) {
-  const container = document.getElementById('dateReportResults');
-  container.innerHTML = '';
-  if (data.length === 0) {
-    container.innerHTML = '<p style="color:#9ca3af;">No records found for this date.</p>';
-    return;
-  }
-  data.forEach(record => {
-    const displayDate = getSriLankaDateOnly(record.date);
-    const div = document.createElement('div');
-    div.className = 'record-item';
-    div.innerHTML = `
-      <div class="record-grid">
-        <div class="record-field"><h5>Batch</h5><p>${record.batch}</p></div>
-        <div class="record-field"><h5>Reg ID</h5><p>${record.registrationId}</p></div>
-        <div class="record-field"><h5>Package</h5><p>${getPackageIdByName(record.packageName)}</p></div>
-        <div class="record-field"><h5>Duration</h5><p>${record.duration}</p></div>
-        <div class="record-field"><h5>Date</h5><p>${displayDate}</p></div>
-      </div>`;
-    container.appendChild(div);
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.tab-button').forEach(button => {
-    button.addEventListener('click', function () {
-      document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
-      this.classList.add('active');
-      document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-      document.getElementById(this.dataset.tab).classList.add('active');
-    });
-  });
-
-  document.getElementById('addPackageBtn').addEventListener('click', async () => {
-    const id = document.getElementById('packageId').value;
-    const name = document.getElementById('packageName').value;
-    if (await addPackage({ id, name })) {
-      document.getElementById('packageId').value = '';
-      document.getElementById('packageName').value = '';
-      await loadAllData();
+    function showNotification(message, type = 'success') {
+      const notification = document.getElementById('notification');
+      notification.textContent = message;
+      notification.className = `notification ${type} show`;
+      setTimeout(() => {
+        notification.classList.remove('show');
+      }, 3000);
     }
-  });
 
-  document.getElementById('assignPackageBtn').addEventListener('click', async () => {
-    const studentData = {
-      registrationId: document.getElementById('studentRegId').value,
-      packageName: document.getElementById('studentPackage').value,
-      duration: document.getElementById('studentDuration').value,
-      batch: document.getElementById('studentBatch').value
-    };
-    if (await assignStudentPackage(studentData)) {
-      document.getElementById('studentRegId').value = '';
-      document.getElementById('studentPackage').value = '';
-      document.getElementById('studentDuration').value = '';
-      document.getElementById('studentBatch').value = '';
-      await loadAllData();
+    function setLoading(isLoading) {
+      loading = isLoading;
+      document.querySelectorAll('.btn').forEach(btn => btn.disabled = isLoading);
     }
-  });
 
-  loadAllData();
-});
+    async function callBackend(data) {
+      try {
+        setLoading(true);
+        const res = await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        return await res.json();
+      } catch (err) {
+        console.error('Backend error:', err);
+        showNotification('Connection to backend failed.', 'error');
+        throw err;
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    async function loadAllData() {
+      const result = await callBackend({ action: 'getData' });
+      if (result && result.success) {
+        packages = result.data.packages.map(row => ({ id: row[0], name: row[1] }));
+        studentRecords = result.data.students; // Backend now sends YYYY-MM-DD directly
+        updatePackageList();
+        updatePackageSelect();
+        updateStats();
+      } else if (result && result.message) {
+        showNotification(result.message, 'error');
+      }
+    }
+
+    async function addPackage(packageData) {
+      if (!packageData.id || !packageData.name) {
+        showNotification('Please fill in both Package ID and Package Name.', 'error');
+        return false;
+      }
+      const result = await callBackend({ action: 'addPackage', packageData });
+      if (result && result.success) {
+        showNotification(result.message);
+        return true;
+      } else {
+        showNotification(result.message, 'error');
+        return false;
+      }
+    }
+
+    async function assignStudentPackage(studentData) {
+      if (!studentData.registrationId || !studentData.packageName || !studentData.duration || !studentData.batch) {
+        showNotification('Please fill in all fields.', 'error');
+        return false;
+      }
+      const result = await callBackend({ action: 'assignPackage', studentData });
+      if (result && result.success) {
+        showNotification(result.message);
+        return true;
+      } else {
+        showNotification(result.message, 'error');
+        return false;
+      }
+    }
+
+    function updatePackageList() {
+      const packageList = document.getElementById('packageList');
+      const packageCount = document.getElementById('packageCount');
+      packageCount.textContent = packages.length;
+      packageList.innerHTML = '';
+      if (packages.length === 0) {
+        packageList.innerHTML = '<p style="text-align:center; color:#9ca3af; padding:2rem;">No packages available</p>';
+        return;
+      }
+      packages.forEach(pkg => {
+        const div = document.createElement('div');
+        div.className = 'package-item';
+        div.innerHTML = `
+          <div class="package-info">
+            <h4>${pkg.name}</h4>
+            <p>ID: ${pkg.id}</p>
+          </div>
+          <div class="stat-badge">Active</div>`;
+        packageList.appendChild(div);
+      });
+    }
+
+    function updatePackageSelect() {
+      const select = document.getElementById('studentPackage');
+      select.innerHTML = '<option value="">Select package</option>';
+      packages.forEach(pkg => {
+        const option = document.createElement('option');
+        option.value = pkg.name;
+        option.textContent = pkg.name;
+        select.appendChild(option);
+      });
+    }
+
+    function updateStats() {
+      const totalStudents = new Set(studentRecords.map(r => r.registrationId)).size;
+      const totalPackages = packages.length;
+      const totalAssignments = studentRecords.length;
+      document.getElementById('totalStudents').textContent = totalStudents;
+      document.getElementById('totalPackages').textContent = totalPackages;
+      document.getElementById('statTotalStudents').textContent = totalStudents;
+      document.getElementById('statTotalPackages').textContent = totalPackages;
+      document.getElementById('statTotalAssignments').textContent = totalAssignments;
+
+      const batchCounts = {};
+      ['2025 Batch', '2026 Batch', '2027 Batch'].forEach(batch => {
+        batchCounts[batch] = studentRecords.filter(r => r.batch === batch).length;
+      });
+      const batchDistribution = document.getElementById('batchDistribution');
+      batchDistribution.innerHTML = '';
+      Object.entries(batchCounts).forEach(([batch, count]) => {
+        const div = document.createElement('div');
+        div.style.display = 'flex';
+        div.style.justifyContent = 'space-between';
+        div.style.fontSize = '0.875rem';
+        div.style.marginBottom = '0.25rem';
+        div.innerHTML = `<span style="color:#d1d5db;">${batch}:</span><span style="font-weight:500;">${count}</span>`;
+        batchDistribution.appendChild(div);
+      });
+    }
+
+    /**
+     * Processes a date string from the backend for display.
+     * The backend is now expected to send YYYY-MM-DD in Asia/Colombo timezone.
+     * This function ensures it's always returned in YYYY-MM-DD format.
+     * @param {string} dateString - The date string from the backend (expected YYYY-MM-DD).
+     * @returns {string} The date in YYYY-MM-DD format.
+     */
+    function getSriLankaDateOnlyForDisplay(dateString) {
+      if (!dateString) return '';
+
+      // If the backend is already sending YYYY-MM-DD, just return it.
+      const yyyyMmDdRegex = /^\d{4}-\d{2}-\d{2}$/;
+      if (yyyyMmDdRegex.test(dateString)) {
+        return dateString;
+      }
+
+      // Fallback for any other unexpected formats (e.g., old ISO strings)
+      try {
+        const date = new Date(dateString); // Try to parse as Date (ISO or other formats)
+        if (!isNaN(date.getTime())) {
+            // If it was a valid date, format it to YYYY-MM-DD in Asia/Colombo.
+            const options = {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                timeZone: 'Asia/Colombo'
+            };
+            const slLocalDateParts = date.toLocaleDateString('en-US', options).split('/');
+            const year = slLocalDateParts[2];
+            const month = slLocalDateParts[0];
+            const day = slLocalDateParts[1];
+            return `${year}-${month}-${day}`;
+        }
+      } catch (e) {
+        console.error("Error processing date string for display:", e, dateString);
+      }
+
+      return dateString; // Return original if all else fails
+    }
+
+
+    // Data modification
+    document.getElementById('searchModifyBtn').addEventListener('click', async () => {
+      const regId = document.getElementById('modifySearchId').value;
+      if (!regId) {
+        showNotification('Enter Registration ID', 'error');
+        return;
+      }
+      const result = await callBackend({ action: 'searchStudent', registrationId: regId });
+      if (result.success) {
+        renderModifyResults(result.data);
+      } else {
+        showNotification(result.message, 'error');
+      }
+    });
+
+    function renderModifyResults(data) {
+      const container = document.getElementById('modifyResults');
+      container.innerHTML = '';
+      if (data.length === 0) {
+        container.innerHTML = '<p style="color:#9ca3af;">No records found.</p>';
+        return;
+      }
+      data.forEach(record => {
+        // Create package options (from packages array)
+        let packageOptions = packages.map(pkg =>
+          `<option value="${pkg.name}"${pkg.name === record.packageName ? ' selected' : ''}>${pkg.name}</option>`
+        ).join('');
+        packageOptions = `<option value="">Select package</option>` + packageOptions;
+
+        // Duration options
+        const durations = ['3 months', '6 months', '9 months'];
+        let durationOptions = durations.map(d =>
+          `<option value="${d}"${d === record.duration ? ' selected' : ''}>${d}</option>`
+        ).join('');
+        durationOptions = `<option value="">Select duration</option>` + durationOptions;
+
+        // Batch options
+        const batches = ['2025 Batch', '2026 Batch', '2027 Batch'];
+        let batchOptions = batches.map(b =>
+          `<option value="${b}"${b === record.batch ? ' selected' : ''}>${b}</option>`
+        ).join('');
+        batchOptions = `<option value="">Select batch</option>` + batchOptions;
+
+        const div = document.createElement('div');
+        div.className = 'record-item';
+        div.innerHTML = `
+          <div class="record-grid">
+            <div class="record-field">
+              <h5>Registration ID</h5>
+              <input value="${record.registrationId}" data-field="registrationId" class="form-input" readonly>
+            </div>
+            <div class="record-field">
+              <h5>Package Name</h5>
+              <select data-field="packageName" class="form-select">
+                ${packageOptions}
+              </select>
+            </div>
+            <div class="record-field">
+              <h5>Duration</h5>
+              <select data-field="duration" class="form-select">
+                ${durationOptions}
+              </select>
+            </div>
+            <div class="record-field">
+              <h5>Batch</h5>
+              <select data-field="batch" class="form-select">
+                ${batchOptions}
+              </select>
+            </div>
+            <div class="record-field">
+              <h5>Date</h5>
+              <input type="date" value="${record.date}" data-field="date" class="form-input">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick='saveStudentUpdate(${JSON.stringify(record).replace(/"/g, "&quot;")}, this.parentElement)'>Save</button>
+          <button class="btn btn-danger" onclick='deleteStudentRow("${record.registrationId}", this.parentElement)'>Delete</button>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    // Delete button handler
+    async function deleteStudentRow(registrationId, container) {
+      if (!confirm("Are you sure you want to delete this record?")) return;
+      const result = await callBackend({ action: 'deleteStudent', registrationId });
+      if (result.success) {
+        showNotification(result.message);
+        container.remove();
+        await loadAllData();
+      } else {
+        showNotification(result.message, 'error');
+      }
+    }
+
+    async function saveStudentUpdate(original, parent) {
+      const updated = {
+        batch: parent.querySelector('[data-field="batch"]').value,
+        rowIndex: original.rowIndex,
+        registrationId: parent.querySelector('[data-field="registrationId"]').value,
+        packageName: parent.querySelector('[data-field="packageName"]').value,
+        duration: parent.querySelector('[data-field="duration"]').value,
+        date: parent.querySelector('[data-field="date"]').value // This is already YYYY-MM-DD
+      };
+
+      // Basic validation for updated fields
+      if (!updated.registrationId || !updated.packageName || !updated.duration || !updated.batch || !updated.date) {
+        showNotification('All fields must be filled to update.', 'error');
+        return;
+      }
+
+      const result = await callBackend({ action: 'updateStudent', updatedData: updated });
+      if (result.success) {
+        showNotification(result.message);
+        await loadAllData();
+      } else {
+        showNotification(result.message, 'error');
+      }
+    }
+
+    // Reports
+    document.getElementById('generateReportBtn').addEventListener('click', async () => {
+      const regId = document.getElementById('reportSearchId').value;
+      const result = await callBackend({ action: 'searchStudent', registrationId: regId });
+      if (result.success) {
+        renderReportResults(result.data);
+      } else {
+        showNotification(result.message, 'error');
+      }
+    });
+
+    function getPackageIdByName(packageName) {
+      const pkg = packages.find(p => p.name === packageName);
+      return pkg ? pkg.id : '';
+    }
+
+    function renderReportResults(data) {
+      const container = document.getElementById('reportResults');
+      container.innerHTML = '';
+      if (data.length === 0) {
+        container.innerHTML = '<p style="color:#9ca3af;">No records found.</p>';
+        return;
+      }
+      data.forEach(record => {
+        // date is already YYYY-MM-DD from backend
+        const div = document.createElement('div');
+        div.className = 'record-item';
+        div.innerHTML = `
+          <div class="record-grid">
+            <div class="record-field"><h5>Batch</h5><p>${record.batch}</p></div>
+            <div class="record-field"><h5>Reg ID</h5><p>${record.registrationId}</p></div>
+            <div class="record-field"><h5>Package</h5><p>${getPackageIdByName(record.packageName)}</p></div>
+            <div class="record-field"><h5>Duration</h5><p>${record.duration}</p></div>
+            <div class="record-field"><h5>Date</h5><p>${record.date}</p></div>
+          </div>`;
+        container.appendChild(div);
+      });
+    }
+
+    // Date Report
+    document.getElementById('generateDateReportBtn').addEventListener('click', async () => {
+      const date = document.getElementById('dateReportInput').value; // This is already YYYY-MM-DD
+      if (!date) {
+        showNotification('Please select a date.', 'error');
+        return;
+      }
+      const result = await callBackend({ action: 'searchByDate', date: date });
+      if (result.success) {
+        renderDateReportResults(result.data);
+      } else {
+        showNotification(result.message, 'error');
+      }
+    });
+
+    function renderDateReportResults(data) {
+      const container = document.getElementById('dateReportResults');
+      container.innerHTML = '';
+      if (data.length === 0) {
+        container.innerHTML = '<p style="color:#9ca3af;">No records found for this date.</p>';
+        return;
+      }
+      data.forEach(record => {
+        // date is already YYYY-MM-DD from backend
+        const div = document.createElement('div');
+        div.className = 'record-item';
+        div.innerHTML = `
+          <div class="record-grid">
+            <div class="record-field"><h5>Batch</h5><p>${record.batch}</p></div>
+            <div class="record-field"><h5>Reg ID</h5><p>${record.registrationId}</p></div>
+            <div class="record-field"><h5>Package</h5><p>${getPackageIdByName(record.packageName)}</p></div>
+            <div class="record-field"><h5>Duration</h5><p>${record.duration}</p></div>
+            <div class="record-field"><h5>Date</h5><p>${record.date}</p></div>
+          </div>`;
+        container.appendChild(div);
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelectorAll('.tab-button').forEach(button => {
+        button.addEventListener('click', function () {
+          document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+          this.classList.add('active');
+          document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+          document.getElementById(this.dataset.tab).classList.add('active');
+        });
+      });
+
+      document.getElementById('addPackageBtn').addEventListener('click', async () => {
+        const id = document.getElementById('packageId').value;
+        const name = document.getElementById('packageName').value;
+        if (await addPackage({ id, name })) {
+          document.getElementById('packageId').value = '';
+          document.getElementById('packageName').value = '';
+          await loadAllData();
+        }
+      });
+
+      document.getElementById('assignPackageBtn').addEventListener('click', async () => {
+        const studentData = {
+          registrationId: document.getElementById('studentRegId').value,
+          packageName: document.getElementById('studentPackage').value,
+          duration: document.getElementById('studentDuration').value,
+          batch: document.getElementById('studentBatch').value
+        };
+        if (await assignStudentPackage(studentData)) {
+          document.getElementById('studentRegId').value = '';
+          document.getElementById('studentPackage').value = '';
+          document.getElementById('studentDuration').value = '';
+          document.getElementById('studentBatch').value = '';
+          await loadAllData();
+        }
+      });
+
+      loadAllData();
+    });
   </script>
 </body>
 </html>
