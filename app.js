@@ -1,77 +1,68 @@
+// app.js (Google Apps Script) - FULL CODE
+
+/**
+ * Handles GET requests to the Web App.
+ * This function is primarily for testing if the Web App is running.
+ * If you were serving your HTML directly from Apps Script, you would use HtmlService here.
+ */
 function doGet(e) {
   return ContentService.createTextOutput('Web App is running!').setMimeType(ContentService.MimeType.TEXT);
 }
 
+/**
+ * Handles POST requests to the Web App.
+ * This is the main entry point for all frontend API calls.
+ * It parses the incoming JSON data, determines the action, and calls the appropriate handler function.
+ */
 function doPost(e) {
   try {
     const data = JSON.parse(e.postData.contents);
     const action = data.action;
     let response = { success: false, message: 'Unknown action' };
 
+    // Log the incoming request for debugging purposes in Apps Script logs
+    Logger.log('Incoming action: ' + action);
+    Logger.log('Incoming data: ' + JSON.stringify(data));
+
     if (action === 'addPackage') {
       handleAddPackage(data.packageData);
-      response = {
-        success: true,
-        message: 'Package added successfully'
-      };
-    }
-    else if (action === 'assignPackage') {
+      response = { success: true, message: 'Package added successfully' };
+    } else if (action === 'assignPackage') {
       handleAssignStudent(data.studentData);
-      response = {
-        success: true,
-        message: 'Student package assigned successfully'
-      };
-    }
-    else if (action === 'getData') {
+      response = { success: true, message: 'Student package assigned successfully' };
+    } else if (action === 'getData') {
       const dataResult = handleGetData();
-      response = {
-        success: true,
-        data: dataResult,
-        message: 'Data fetched successfully'
-      };
-    }
-    else if (action === 'searchStudent') {
-      const records = handleSearchStudent(data.registrationId);
-      response = {
-        success: true,
-        data: records,
-        message: 'Student records fetched successfully'
-      };
-    }
-    else if (action === 'updateStudent') {
+      response = { success: true, data: dataResult, message: 'Data fetched successfully' };
+    } else if (action === 'searchStudent') {
+      // Ensure searchStudent can handle both registrationId and date for reports
+      const records = handleSearchStudent(data.registrationId); // Removed date parameter from here, as per original intent for searchStudent
+      response = { success: true, data: records, message: 'Student records fetched successfully' };
+    } else if (action === 'updateStudent') {
       handleUpdateStudent(data.updatedData);
-      response = {
-        success: true,
-        message: 'Student data updated successfully'
-      };
-    }
-    else if (action === 'deleteStudent') {
+      response = { success: true, message: 'Student data updated successfully' };
+    } else if (action === 'deleteStudent') {
       handleDeleteStudent(data.registrationId);
-      response = {
-        success: true,
-        message: 'Student record deleted successfully'
-      };
-    }
-    else if (action === 'searchByDate') {
+      response = { success: true, message: 'Student record deleted successfully' };
+    } else if (action === 'searchByDate') {
       const records = handleSearchByDate(data.date);
-      response = {
-        success: true,
-        data: records,
-        message: 'Records for the date fetched successfully'
-      };
-    }
-    else {
-      response = {
-        success: false,
-        message: 'Unknown action: ' + action
-      };
+      response = { success: true, data: records, message: 'Records for the date fetched successfully' };
+    } else if (action === 'getPackageCountReport') {
+      const reportData = handleGetPackageCountReport(data.startDate, data.endDate);
+      response = { success: true, data: reportData, message: 'Package count report generated successfully' };
+    } else if (action === 'login') { // Added login action
+      const { username, password } = data;
+      const isAuthenticated = handleLogin(username, password);
+      response = { success: isAuthenticated, message: isAuthenticated ? 'Login successful' : 'Invalid credentials' };
+    } else {
+      response = { success: false, message: 'Unknown action: ' + action };
     }
 
+    // Return the response as JSON with the correct MIME type
     return ContentService.createTextOutput(JSON.stringify(response)).setMimeType(ContentService.MimeType.JSON);
 
   } catch (err) {
     // Log the error for debugging in Apps Script logs
-    console.error("Error in doPost:", err.message, err.stack);
+    Logger.log("Error in doPost: " + err.message + " Stack: " + err.stack);
     return ContentService.createTextOutput(JSON.stringify({
       success: false,
       message: 'Server error: ' + err.message
@@ -102,7 +93,8 @@ function handleAddPackage(packageData) {
     throw new Error('Invalid package data: ID and Name are required.');
   }
   const sheet = getSheetByName('Packages');
-  sheet.appendRow([packageData.id, packageData.name]);
+  // Ensure package ID is stored as a string
+  sheet.appendRow([String(packageData.id), packageData.name]);
 }
 
 /**
@@ -116,9 +108,8 @@ function handleAssignStudent(studentData) {
   }
   const sheet = getSheetByName(studentData.batch);
   const now = new Date();
-  // Store the date as a Date object in the sheet.
-  // Google Sheets will format it based on cell settings (ensure date column is formatted as Date).
-  sheet.appendRow([studentData.registrationId, studentData.packageName, studentData.duration, now]);
+  // Ensure registration ID is stored as a string
+  sheet.appendRow([String(studentData.registrationId), studentData.packageName, studentData.duration, now]);
 }
 
 /**
@@ -133,10 +124,12 @@ function handleGetData() {
   const packageSheet = getSheetByName('Packages');
   const packageValues = packageSheet.getDataRange().getValues();
   const packages = [];
+  // Start from row 1 (index 1) to skip header row
   for (let i = 1; i < packageValues.length; i++) {
     const row = packageValues[i];
-    if (row[0] && row[1]) {
-      packages.push([row[0], row[1]]);
+    if (row[0] && row[1]) { // Ensure both ID and Name are present
+      // Ensure package ID is a string when fetched
+      packages.push([String(row[0]), row[1]]);
     }
   }
 
@@ -146,9 +139,10 @@ function handleGetData() {
   batches.forEach(batch => {
     const sheet = getSheetByName(batch);
     const values = sheet.getDataRange().getValues();
+    // Start from row 1 (index 1) to skip header row
     for (let i = 1; i < values.length; i++) {
       const row = values[i];
-      let dateValue = row[3]; // Date column from the sheet
+      let dateValue = row[3]; // Date column from the sheet (assuming 4th column)
       let formattedDateForFrontend = null;
 
       // Format the date value from sheet to YYYY-MM-DD string for frontend display
@@ -172,18 +166,16 @@ function handleGetData() {
         const dateFromNumber = new Date(excelEpoch.getTime() + dateValue * msPerDay);
         formattedDateForFrontend = Utilities.formatDate(dateFromNumber, srilankaTimeZone, "yyyy-MM-dd");
       }
-      
-      // Log for debugging: what date is being sent to frontend
-      // console.log(`[handleGetData] Batch: ${batch}, RegID: ${row[0]}, Date from sheet: ${dateValue}, Formatted for frontend: ${formattedDateForFrontend}`);
 
-      if (row[0]) {
+      if (row[0]) { // Ensure registration ID is not empty
         students.push({
-          registrationId: row[0],
+          // Ensure registrationId is a string when fetched
+          registrationId: String(row[0]),
           packageName: row[1],
           duration: row[2],
           date: formattedDateForFrontend, // Send YYYY-MM-DD string in SL time
           batch: batch,
-          rowIndex: i + 1
+          rowIndex: i + 1 // Store the 1-based row index for updates/deletions
         });
       }
     }
@@ -203,10 +195,12 @@ function handleSearchStudent(regId) {
   const batches = ['2025 Batch', '2026 Batch', '2027 Batch'];
   const results = [];
   const srilankaTimeZone = "Asia/Colombo";
+  const searchRegId = String(regId); // Ensure incoming regId is a string for comparison
 
   batches.forEach(batch => {
     const sheet = getSheetByName(batch);
     const values = sheet.getDataRange().getValues();
+    // Start from row 1 (index 1) to skip header row
     for (let i = 1; i < values.length; i++) {
       const row = values[i];
       let dateValue = row[3]; // Date column from the sheet
@@ -231,14 +225,13 @@ function handleSearchStudent(regId) {
         const dateFromNumber = new Date(excelEpoch.getTime() + dateValue * msPerDay);
         formattedDateForFrontend = Utilities.formatDate(dateFromNumber, srilankaTimeZone, "yyyy-MM-dd");
       }
-      
-      // console.log(`[handleSearchStudent] Batch: ${batch}, RegID: ${row[0]}, Date from sheet: ${dateValue}, Formatted for frontend: ${formattedDateForFrontend}`);
 
-      if (row[0] === regId) {
+      // Perform comparison: ensure both sides are strings
+      if (String(row[0]) === searchRegId) {
         results.push({
           rowIndex: i + 1,
           batch: batch,
-          registrationId: row[0],
+          registrationId: String(row[0]), // Ensure consistency here too
           packageName: row[1],
           duration: row[2],
           date: formattedDateForFrontend // Send YYYY-MM-DD string in SL time
@@ -270,8 +263,9 @@ function handleUpdateStudent(updatedData) {
   }
 
   // Set the values for the specified row and columns
+  // Ensure registrationId is written as a string
   sheet.getRange(rowIndex, 1, 1, 4).setValues([[
-    updatedData.registrationId,
+    String(updatedData.registrationId),
     updatedData.packageName,
     updatedData.duration,
     dateToStore // Store as Date object
@@ -286,6 +280,7 @@ function handleDeleteStudent(registrationId) {
   if (!registrationId) throw new Error('Registration ID is required for deletion.');
   const batches = ['2025 Batch', '2026 Batch', '2027 Batch'];
   let deleted = false;
+  const deleteRegId = String(registrationId); // Ensure incoming regId is a string for comparison
 
   for (let i = 0; i < batches.length; i++) {
     const batch = batches[i];
@@ -295,7 +290,8 @@ function handleDeleteStudent(registrationId) {
     // Iterate backwards to safely delete rows without affecting loop index
     for (let j = values.length - 1; j >= 1; j--) { // Start from last row, skip header
       const row = values[j];
-      if (row[0] === registrationId) {
+      // Perform comparison: ensure both sides are strings
+      if (String(row[0]) === deleteRegId) {
         sheet.deleteRow(j + 1); // j + 1 because sheet rows are 1-indexed
         deleted = true;
         // If you only want to delete the first occurrence, uncomment `break`
@@ -324,6 +320,7 @@ function handleSearchByDate(searchDateStr) {
   batches.forEach(batch => {
     const sheet = getSheetByName(batch);
     const values = sheet.getDataRange().getValues();
+    // Start from row 1 (index 1) to skip header row
     for (let i = 1; i < values.length; i++) {
       const row = values[i];
       let recordDateValue = row[3]; // Date column from the sheet
@@ -347,15 +344,14 @@ function handleSearchByDate(searchDateStr) {
         const dateFromNumber = new Date(excelEpoch.getTime() + recordDateValue * msPerDay);
         formattedRecordDateForComparison = Utilities.formatDate(dateFromNumber, srilankaTimeZone, "yyyy-MM-dd");
       }
-      
-      // console.log(`[handleSearchByDate] Batch: ${batch}, RegID: ${row[0]}, Sheet Date: ${recordDateValue}, Formatted for comparison: ${formattedRecordDateForComparison}, Search Date: ${searchDateStr}`);
 
       // Compare the formatted sheet date with the search date string
-      if (formattedRecordDateForComparison === searchDateStr) {
+      // Registration ID (row[0]) is explicitly converted to string for comparison here as well
+      if (String(row[0]) && formattedRecordDateForComparison === searchDateStr) { // Added String(row[0]) check
         results.push({
           rowIndex: i + 1,
           batch: batch,
-          registrationId: row[0],
+          registrationId: String(row[0]), // Ensure registrationId is consistently a string
           packageName: row[1],
           duration: row[2],
           date: formattedRecordDateForComparison // Send YYYY-MM-DD string in SL time
@@ -365,3 +361,100 @@ function handleSearchByDate(searchDateStr) {
   });
   return results;
 }
+
+/**
+ * Gets unique package names from the 'Packages' sheet.
+ * @returns {Array<string>} An array of package names.
+ */
+function handleGetPackageNames() {
+  const sheet = getSheetByName('Packages');
+  const values = sheet.getDataRange().getValues();
+  const packageNames = new Set();
+  // Start from row 1 (index 1) to skip header row
+  for (let i = 1; i < values.length; i++) {
+    if (values[i][1]) { // Package Name is in the second column (index 1)
+      packageNames.add(values[i][1]);
+    }
+  }
+  return Array.from(packageNames);
+}
+
+/**
+ * Handles generating a package count report for a given date range.
+ * @param {string} startDateStr - Start date string (YYYY-MM-DD).
+ * @param {string} endDateStr - End date string (YYYY-MM-DD).
+ * @returns {object} An object containing package counts and total count.
+ */
+function handleGetPackageCountReport(startDateStr, endDateStr) {
+  const srilankaTimeZone = "Asia/Colombo";
+  const packagesTaken = {};
+  let totalPackagesForPeriod = 0;
+
+  // Parse start and end dates as local dates to avoid timezone issues with comparison
+  // Using T00:00:00 for start and T23:59:59 for end ensures full day coverage
+  const start = startDateStr ? new Date(startDateStr + 'T00:00:00') : null;
+  const end = endDateStr ? new Date(endDateStr + 'T23:59:59') : null;
+
+  const batches = ['2025 Batch', '2026 Batch', '2027 Batch'];
+  batches.forEach(batch => {
+    const sheet = getSheetByName(batch);
+    const values = sheet.getDataRange().getValues();
+    for (let i = 1; i < values.length; i++) { // Skip header row
+      const row = values[i];
+      let recordDateValue = row[3]; // Date column from the sheet
+      let recordDate = null;
+
+      // Convert recordDateValue to a Date object for comparison
+      if (recordDateValue instanceof Date) {
+        recordDate = recordDateValue;
+      } else if (typeof recordDateValue === 'string') {
+        try {
+          recordDate = new Date(recordDateValue);
+        } catch (e) {
+          // Invalid date string, skip
+        }
+      } else if (typeof recordDateValue === 'number') {
+        const excelEpoch = new Date('1899-12-30T00:00:00Z');
+        const msPerDay = 24 * 60 * 60 * 1000;
+        recordDate = new Date(excelEpoch.getTime() + recordDateValue * msPerDay);
+      }
+
+      if (recordDate && !isNaN(recordDate.getTime())) {
+        let isInRange = true;
+        if (start && recordDate < start) {
+          isInRange = false;
+        }
+        if (end && recordDate > end) {
+          isInRange = false;
+        }
+
+        if (isInRange) {
+          const packageName = row[1]; // Package name is in the second column (index 1)
+          if (packageName) {
+            packagesTaken[packageName] = (packagesTaken[packageName] || 0) + 1;
+            totalPackagesForPeriod++;
+          }
+        }
+      }
+    }
+  });
+
+  return { packageCounts: packagesTaken, totalCount: totalPackagesForPeriod };
+}
+
+
+/**
+ * Handles admin login.
+ * @param {string} username - The entered username.
+ * @param {string} password - The entered password.
+ * @returns {boolean} True if credentials are valid, false otherwise.
+ */
+function handleLogin(username, password) {
+  // IMPORTANT: For a production app, do NOT hardcode credentials.
+  // Use secure authentication methods like OAuth, Firebase Auth, or a separate backend.
+  const ADMIN_NAME = "PCA Admin";
+  const ADMIN_PASSWORD = "PCA@1369";
+
+  return username === ADMIN_NAME && password === ADMIN_PASSWORD;
+}
+
