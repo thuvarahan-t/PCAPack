@@ -5,239 +5,433 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Course Management Dashboard</title>
     <style>
-        /* Base Styles */
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #000000 50%, #1a1a2e 100%);
-            color: white; min-height: 100vh;
-        }
+/* Base Styles */
+/* Base Styles */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #000000 50%, #1a1a2e 100%);
+    color: white; min-height: 100vh;
+}
 
-        /* Login Page Styles */
-        #login-page {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: linear-gradient(135deg, #1a1a2e 0%, #000000 50%, #1a1a2e 100%);
-            color: white;
-            flex-direction: column;
-            padding: 20px;
-        }
-        .login-card {
-            background: rgba(31, 41, 55, 0.7); /* Slightly more transparent */
-            border: 1px solid #374151;
-            border-radius: 0.5rem;
-            padding: 2rem;
-            width: 100%;
-            max-width: 400px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
-            text-align: center;
-        }
-        .login-card h2 {
-            font-size: 1.75rem;
-            margin-bottom: 1.5rem;
-            color: #dc2626; /* Red accent for title */
-        }
-        .login-card .form-group {
-            margin-bottom: 1rem;
-            text-align: left;
-        }
-        .login-card .form-label {
-            display: block;
-            margin-bottom: 0.5rem;
-        }
-        .login-card .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border-radius: 0.375rem;
-            border: 1px solid #4b5563;
-            background: #374151;
-            color: white;
-        }
-        .login-card .btn-primary {
-            width: 100%;
-            margin-top: 1.5rem;
-            padding: 1rem;
-            font-size: 1rem;
-        }
-        .login-message {
-            margin-top: 1rem;
-            color: #ef4444; /* Error red */
-            font-weight: 500;
-        }
+/* Login Page Styles */
+#login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #1a1a2e 0%, #000000 50%, #1a1a2e 100%);
+    color: white;
+    flex-direction: column;
+    padding: 20px;
+}
+.login-card {
+    background: rgba(31, 41, 55, 0.7);
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 2rem;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    text-align: center;
+}
+.login-card h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: #dc2626;
+}
+.login-card .form-group {
+    margin-bottom: 1rem;
+    text-align: left;
+}
+.login-card .form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+}
+.login-card .form-input {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.375rem;
+    border: 1px solid #4b5563;
+    background: #374151;
+    color: white;
+}
+.login-card .btn-primary {
+    width: 100%;
+    margin-top: 1.5rem;
+    padding: 1rem;
+    font-size: 1rem;
+}
+.login-message {
+    margin-top: 1rem;
+    color: #ef4444;
+    font-weight: 500;
+}
 
-        /* Dashboard content initially hidden */
-        #dashboard-content {
-            display: none; /* Initially hide the entire dashboard */
-        }
+/* Dashboard content initially hidden */
+#dashboard-content {
+    display: none;
+}
 
-        /* Header Styles */
-        .header {
-            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
-            border-bottom: 1px solid rgba(220,38,38,0.2);
-            position: sticky; top: 0; z-index: 10; padding: 1rem 0;
-        }
-        .header-content {
-            max-width: 1200px; margin: auto; padding: 0 1.5rem;
-            display: flex; justify-content: space-between; align-items: center;
-        }
-        .header-left { display: flex; align-items: center; gap: 0.75rem; }
-        .header-icon {
-            background: #dc2626; padding: 0.5rem; border-radius: 0.5rem;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .header-title h1 { font-size: 1.5rem; font-weight: bold; }
-        .header-title p { color: #9ca3af; font-size: 0.875rem; }
-        .header-stats { display: flex; gap: 1rem; }
-        .stat-badge {
-            border: 1px solid #dc2626; color: #f87171;
-            padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.875rem;
-            display: flex; align-items: center; gap: 0.25rem;
-        }
-        .container { max-width: 1200px; margin: auto; padding: 2rem 1.5rem; }
-        
-        /* Tabs Styles */
-        .tabs { margin-bottom: 1.5rem; }
-        .tab-list {
-            display: grid; grid-template-columns: repeat(4,1fr);
-            background: rgba(31,41,55,0.5);
-            border: 1px solid #374151; border-radius: 0.5rem; padding: 0.25rem;
-        }
-        .tab-button {
-            background: none; border: none; color: white;
-            padding: 0.75rem 1rem; border-radius: 0.25rem; cursor: pointer;
-            transition: all 0.2s; font-size: 0.875rem;
-        }
-        .tab-button:hover { background: rgba(55,65,81,0.5); }
-        .tab-button.active { background: #dc2626; color: white; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        /* Notification Styles */
-        .notification {
-            position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
-            border-radius: 0.5rem; color: white; font-weight: 500; z-index: 1000;
-            transform: translateX(100%); transition: transform 0.3s ease;
-        }
-        .notification.show { transform: translateX(0); }
-        .notification.success { background: #059669; border: 1px solid #10b981; }
-        .notification.error { background: #dc2626; border: 1px solid #ef4444; }
-        
-        /* Stats Grid Styles */
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-        .stat-card {
-            background: rgba(31, 41, 55, 0.5);
-            border: 1px solid #374151;
-            border-radius: 0.5rem;
-            padding: 1.5rem;
-        }
-        .stat-content { display: flex; justify-content: space-between; align-items: center; }
-        .stat-info h3 { color: #9ca3af; font-size: 0.875rem; margin-bottom: 0.5rem; }
-        .stat-info p { font-size: 2rem; font-weight: bold; }
-        .stat-icon { width: 2rem; height: 2rem; color: #dc2626; }
+/* Header Styles */
+.header {
+    background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(220,38,38,0.2);
+    position: sticky; top: 0; z-index: 10; padding: 1rem 0;
+}
+.header-content {
+    max-width: 1200px; margin: auto; padding: 0 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.header-left { display: flex; align-items: center; gap: 0.75rem; }
+.header-icon {
+    background: #dc2626; padding: 0.5rem; border-radius: 0.5rem;
+    display: flex; align-items: center; justify-content: center;
+}
+.header-title h1 { font-size: 1.5rem; font-weight: bold; }
+.header-title p { color: #9ca3af; font-size: 0.875rem; }
+.header-stats { display: flex; gap: 1rem; }
+.stat-badge {
+    border: 1px solid #dc2626; color: #f87171;
+    padding: 0.25rem 0.75rem; border-radius: 1rem; font-size: 0.875rem;
+    display: flex; align-items: center; gap: 0.25rem;
+}
+.container { max-width: 1200px; margin: auto; padding: 2rem 1.5rem; }
 
-        /* Card Styles */
-        .card {
-            background: rgba(31, 41, 55, 0.5);
-            border: 1px solid #374151;
-            border-radius: 0.5rem;
-            overflow: hidden;
-        }
-        .card-header { padding: 1.5rem; border-bottom: 1px solid #374151; }
-        .card-title {
-            font-size: 1.25rem; font-weight: 600;
-            display: flex; align-items: center; gap: 0.5rem;
-            margin-bottom: 0.5rem;
-        }
-        .card-description { color: #9ca3af; font-size: 0.875rem; }
-        .card-content { padding: 1.5rem; }
+/* Tabs Styles */
+.tabs { margin-bottom: 1.5rem; }
+.tab-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr); /* For 4 tabs, equally spaced */
+    background: rgba(31,41,55,0.8);
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 0.25rem;
+    overflow: hidden;
+}
+.tab-button {
+    background: none;
+    border: none;
+    color: white;
+    padding: 0.75rem 1rem;
+    border-radius: 0.25rem 0.25rem 0 0;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-size: 0.875rem;
+    border-bottom: 3px solid transparent;
+    width: 100%; /* Make each button fill its grid cell */
+    text-align: center;
+}
+.tab-button:hover {
+    background: rgba(55,65,81,0.5);
+}
+.tab-button.active {
+    background: none;
+    color: #dc2626;
+    border-bottom: 3px solid #dc2626;
+    font-weight: bold;
+}
+.tab-content { display: none; }
+.tab-content.active { display: block; }
 
-        /* Form Styles */
-        .form-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem; margin-bottom: 1.5rem;
-        }
-        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
-        .form-label { color: #d1d5db; font-size: 0.875rem; font-weight: 500; }
-        .form-input, .form-select {
-            background: #374151; border: 1px solid #4b5563; color: white;
-            padding: 0.75rem; border-radius: 0.375rem;
-        }
-        .form-input:focus, .form-select:focus {
-            outline: none; border-color: #dc2626;
-            box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
-        }
-        .btn {
-            padding: 0.75rem 1.5rem; border-radius: 0.375rem;
-            font-weight: 500; cursor: pointer; transition: all 0.2s;
-            border: none; font-size: 0.875rem;
-        }
-        .btn-primary { background: #dc2626; color: white; }
-        .btn-primary:hover { background: #b91c1c; }
-        .btn-primary:disabled { background: #6b7280; cursor: not-allowed; }
-        .btn-full { width: 100%; }
+/* Notification Styles */
+.notification {
+    position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem;
+    border-radius: 0.5rem; color: white; font-weight: 500; z-index: 1000;
+    transform: translateX(100%); transition: transform 0.3s ease;
+}
+.notification.show { transform: translateX(0); }
+.notification.success { background: #059669; border: 1px solid #10b981; }
+.notification.error { background: #dc2626; border: 1px solid #ef4444; }
 
-        /* Package List Styles */
-        .package-list { max-height: 320px; overflow-y: auto; }
-        .package-item {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0.75rem; background: rgba(55, 65, 81, 0.5);
-            border-radius: 0.5rem; border: 1px solid #4b5563; margin-bottom: 0.75rem;
-        }
-        .package-info h4 { font-weight: 500; margin-bottom: 0.25rem; }
-        .package-info p { color: #9ca3af; font-size: 0.875rem; }
+/* Stats Grid Styles */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+.stat-card {
+    background: rgba(31, 41, 55, 0.5);
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+}
+.stat-content { display: flex; justify-content: space-between; align-items: center; }
+.stat-info h3 { color: #9ca3af; font-size: 0.875rem; margin-bottom: 0.5rem; }
+.stat-info p { font-size: 2rem; font-weight: bold; }
+.stat-icon { width: 2rem; height: 2rem; color: #dc2626; }
 
-        /* Record List Styles (for reports and modify) */
-        .records-list { max-height: 400px; overflow-y: auto; }
-        .record-item {
-            background: rgba(55, 65, 81, 0.5); border: 1px solid #4b5563;
-            border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem;
-        }
-        .record-grid {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;
-        }
-        .record-field h5 { color: #9ca3af; font-size: 0.875rem; margin-bottom: 0.25rem; }
-        .record-field p { font-weight: 500; }
+/* Card Styles */
+.card {
+    background: rgba(31, 41, 55, 0.5);
+    border: 1px solid #374151;
+    border-radius: 0.5rem;
+    overflow: hidden;
+}
+.card-header { padding: 1.5rem; border-bottom: 1px solid #374151; }
+.card-title {
+    font-size: 1.25rem; font-weight: 600;
+    display: flex; align-items: center; gap: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+.card-description { color: #9ca3af; font-size: 0.875rem; }
+.card-content { padding: 1.5rem; }
 
-        /* Loading Indicator Styles */
-        .loading { text-align: center; padding: 2rem; color: #9ca3af; }
+/* Form Styles */
+.form-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem; margin-bottom: 1.5rem;
+}
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-label { color: #d1d5db; font-size: 0.875rem; font-weight: 500; }
+.form-input, .form-select {
+    background: #374151; border: 1px solid #4b5563; color: white;
+    padding: 0.75rem; border-radius: 0.375rem;
+}
+.form-input:focus, .form-select:focus {
+    outline: none; border-color: #dc2626;
+    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.1);
+}
+.btn {
+    padding: 0.75rem 1.5rem; border-radius: 0.375rem;
+    font-weight: 500; cursor: pointer; transition: all 0.2s;
+    border: none; font-size: 0.875rem;
+}
+.btn-primary { background: #dc2626; color: white; }
+.btn-primary:hover { background: #b91c1c; }
+.btn-primary:disabled { background: #6b7280; cursor: not-allowed; }
+.btn-full { width: 100%; }
 
-        /* Reports Sub-Tabs Styles */
-        .report-sub-tabs {
-            margin-top: 1.5rem;
-            margin-bottom: 1rem;
-        }
-        .report-sub-tab-list {
-            display: flex;
-            background: rgba(31,41,55,0.5);
-            border: 1px solid #374151; border-radius: 0.5rem; padding: 0.25rem;
-        }
-        .report-sub-tab-button {
-            background: none; border: none; color: white;
-            padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer;
-            transition: all 0.2s; font-size: 0.875rem;
-            flex-grow: 1;
-        }
-        .report-sub-tab-button:hover { background: rgba(55,65,81,0.5); }
-        .report-sub-tab-button.active { background: #dc2626; color: white; }
-        .report-sub-tab-content { display: none; padding-top: 1.5rem; }
-        .report-sub-tab-content.active { display: block; }
+/* Package List Styles */
+.package-list { max-height: 320px; overflow-y: auto; }
+.package-item {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.75rem; background: rgba(55, 65, 81, 0.5);
+    border-radius: 0.5rem; border: 1px solid #4b5563; margin-bottom: 0.75rem;
+}
+.package-info h4 { font-weight: 500; margin-bottom: 0.25rem; }
+.package-info p { color: #9ca3af; font-size: 0.875rem; }
 
-        /* Responsive Adjustments */
-        @media (max-width: 768px) {
-            .header-content { flex-direction: column; gap: 1rem; }
-            .header-stats { flex-wrap: wrap; justify-content: center; }
-            .tab-list { grid-template-columns: repeat(2, 1fr); gap: 0.25rem; }
-            .form-grid { grid-template-columns: 1fr; }
-            .record-grid { grid-template-columns: 1fr; }
-            .report-sub-tab-list { flex-direction: column; }
-        }
+/* Record List Styles (for reports and modify) */
+.records-list { max-height: 400px; overflow-y: auto; }
+.record-item {
+    background: rgba(55, 65, 81, 0.5); border: 1px solid #4b5563;
+    border-radius: 0.5rem; padding: 1rem; margin-bottom: 0.75rem;
+}
+.record-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;
+}
+.record-field h5 { color: #9ca3af; font-size: 0.875rem; margin-bottom: 0.25rem; }
+.record-field p { font-weight: 500; }
+
+/* Loading Indicator Styles */
+.loading { text-align: center; padding: 2rem; color: #9ca3af; }
+
+/* Reports Sub-Tabs Styles */
+.report-sub-tabs {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+}
+.report-sub-tab-list {
+    display: flex;
+    background: rgba(31,41,55,0.5);
+    border: 1px solid #374151; border-radius: 0.5rem; padding: 0.25rem;
+}
+.report-sub-tab-button {
+    background: none; border: none; color: white;
+    padding: 0.5rem 1rem; border-radius: 0.25rem; cursor: pointer;
+    transition: all 0.2s; font-size: 0.875rem;
+    flex-grow: 1;
+}
+.report-sub-tab-button:hover { background: rgba(55,65,81,0.5); }
+.report-sub-tab-button.active {
+    background: none;
+    color: #dc2626;
+    border-bottom: 3px solid #dc2626;
+    font-weight: bold;
+}
+.report-sub-tab-content { display: none; padding-top: 1.5rem; }
+.report-sub-tab-content.active { display: block; }
+
+/* ADMIN REPORT MODERN ANIMATED UI START */
+.admin-report-card {
+    background: linear-gradient(135deg, #181c24 0%, #232946 100%);
+    border-radius: 1.2rem;
+    box-shadow: 0 8px 36px rgba(60, 60, 120, 0.12), 0 2px 8px rgba(220,38,38,0.03);
+    padding: 2.5rem 2.5rem 2.2rem 2.5rem;
+    margin: 2rem auto;
+    max-width: 1000px;
+    animation: fadeInUp 0.8s cubic-bezier(.54,-0.3,.57,1.14);
+    border: 1px solid #232946;
+    position: relative;
+}
+@keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(40px);}
+    100% { opacity: 1; transform: translateY(0);}
+}
+.admin-report-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.2rem;
+}
+.admin-report-desc {
+    color: #bdbdd7;
+    font-size: 1.12rem;
+    margin-bottom: 1.4rem;
+    font-weight: 400;
+}
+.admin-report-divider {
+    height: 2px;
+    background: linear-gradient(90deg, #232946 0%, #232946 100%);
+    opacity: 0.4;
+    margin: 0 -2.5rem 2rem -2.5rem;
+    border: none;
+}
+.admin-report-filter-row {
+    display: flex;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: flex-end;
+}
+.admin-report-filter-row .form-group {
+    flex: 1 1 180px;
+    min-width: 180px;
+}
+.admin-report-filter-row .form-label {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #e6e7ee;
+    margin-bottom: 0.6rem;
+    letter-spacing: 0.02em;
+}
+.admin-report-filter-row .form-select,
+.admin-report-filter-row .form-input {
+    border-radius: 0.7rem;
+    border: 1px solid #313e5b;
+    padding: 1rem 1.2rem;
+    background: #222736;
+    color: #e6e7ee;
+    font-size: 1.05rem;
+    font-weight: 500;
+    transition: border 0.2s, box-shadow 0.2s;
+}
+.admin-report-filter-row .form-select:focus,
+.admin-report-filter-row .form-input:focus {
+    border-color: #dc2626;
+    box-shadow: 0 0 8px #dc262655;
+    outline: none;
+}
+.admin-report-filter-btn {
+    background: linear-gradient(90deg, #dc2626 0%, #f87171 100%);
+    border: none;
+    color: #fff;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+    padding: 1rem 2.7rem;
+    border-radius: 0.7rem;
+    cursor: pointer;
+    box-shadow: 0 2px 12px #dc262655;
+    transition: background 0.2s, transform 0.12s, box-shadow 0.2s;
+    font-size: 1.08rem;
+    margin-top: 0.6rem;
+}
+.admin-report-filter-btn:hover {
+    background: linear-gradient(90deg, #b91c1c 0%, #dc2626 100%);
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 4px 16px #dc262655;
+}
+.admin-report-meta {
+    margin-bottom: 2rem;
+    font-size: 1.1rem;
+    color: #bdbdd7;
+    background: rgba(220,38,38,0.07);
+    border-radius: 0.7rem;
+    padding: 0.7rem 1.2rem;
+    display: flex;
+    gap: 2.5rem;
+    align-items: center;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+    animation: fadeInUp 0.5s cubic-bezier(.54,-0.3,.57,1.14);
+}
+.admin-report-meta b {
+    color: #fff;
+    font-weight: 700;
+}
+.admin-report-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: rgba(40,50,85,0.9);
+    border-radius: 0.8rem;
+    overflow: hidden;
+    margin-bottom: 1.2rem;
+    box-shadow: 0 2px 12px rgba(220,38,38,0.08);
+    animation: fadeInUp 1.1s 0.3s cubic-bezier(.54,-0.3,.57,1.14) backwards;
+}
+.admin-report-table th, .admin-report-table td {
+    padding: 1.1rem 1.2rem;
+    border-bottom: 1px solid #232946;
+    text-align: left;
+    font-size: 1.18rem;
+    color: #fff;
+    transition: background 0.18s;
+    font-weight: 500;
+}
+.admin-report-table th {
+    background: #232946;
+    color: #f87171;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border-bottom: 2px solid #dc2626;
+    text-align: left;
+}
+.admin-report-table tr {
+    transition: background 0.25s;
+}
+.admin-report-table tr:hover td {
+    background: rgba(220,38,38,0.09);
+}
+.admin-report-table td:last-child, .admin-report-table th:last-child {
+    text-align: right;
+}
+.admin-report-total {
+    text-align: right;
+    font-size: 1.32rem;
+    font-weight: bold;
+    color: #dc2626;
+    margin-top: 0.7rem;
+    letter-spacing: 0.03em;
+    animation: fadeInUp 0.6s 0.5s cubic-bezier(.54,-0.3,.57,1.14) backwards;
+}
+@media (max-width: 1050px) {
+    .admin-report-card { max-width: 99vw; padding: 2rem 0.6rem; }
+}
+@media (max-width: 800px) {
+    .admin-report-filter-row { flex-direction: column; gap: 0.7rem; }
+    .admin-report-meta { flex-direction: column; gap: 0.7rem; }
+    .admin-report-table th, .admin-report-table td { font-size: 1rem; padding: 0.7rem 0.8rem; }
+    .admin-report-title { font-size: 1.5rem; }
+}
+/* Optional: subtle fade for table rows on update */
+.admin-report-table tr {
+    opacity: 1;
+    transform: none;
+    transition: opacity 0.3s, transform 0.3s;
+}
+.admin-report-table tr.new-row {
+    opacity: 0;
+    transform: translateY(10px);
+    animation: rowFadeIn 0.5s forwards;
+}
+@keyframes rowFadeIn {
+    to { opacity: 1; transform: none; }
+}
+/* ADMIN REPORT MODERN ANIMATED UI END */
     </style>
 </head>
 <body>
@@ -256,7 +450,6 @@
             <p id="loginMessage" class="login-message"></p>
         </div>
     </div>
-
     <div id="dashboard-content">
         <div class="header">
             <div class="header-content">
@@ -276,7 +469,7 @@
                 <div class="header-stats">
                     <div class="stat-badge">
                         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 0 0 0-4 4v2"></path>
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
                             <circle cx="9" cy="7" r="4"></circle>
                             <path d="M22 21v-2a4 0 0 0-3-3.87"></path>
                             <path d="M16 3.13a4 0 0 1 0 7.75"></path>
@@ -294,7 +487,6 @@
                 </div>
             </div>
         </div>
-
         <div class="container">
             <div class="stats-grid">
                 <div class="stat-card">
@@ -330,7 +522,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="tabs">
                 <div class="tab-list">
                     <button class="tab-button active" data-tab="packages">Package Management</button>
@@ -339,7 +530,6 @@
                     <button class="tab-button" data-tab="reports">Reports</button>
                 </div>
             </div>
-
             <div id="packages" class="tab-content active">
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                     <div class="card">
@@ -370,7 +560,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="assign" class="tab-content">
                 <div class="card">
                     <div class="card-header">
@@ -412,7 +601,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="modify" class="tab-content">
                 <div class="card">
                     <div class="card-header">
@@ -434,7 +622,6 @@
                     </div>
                 </div>
             </div>
-
             <div id="reports" class="tab-content">
                 <div class="report-sub-tabs">
                     <div class="report-sub-tab-list">
@@ -442,9 +629,9 @@
                         <button class="report-sub-tab-button" data-sub-tab="dateReportSub">Date Report</button>
                         <button class="report-sub-tab-button" data-sub-tab="packageReportSub">Package Report</button>
                         <button class="report-sub-tab-button" data-sub-tab="packageCountReportSub">Package Count</button>
+                        <button class="report-sub-tab-button" data-sub-tab="adminReportSub">Admin Report</button>
                     </div>
                 </div>
-
                 <div id="studentReportSub" class="report-sub-tab-content active">
                     <div class="card">
                         <div class="card-header">
@@ -466,7 +653,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="dateReportSub" class="report-sub-tab-content">
                     <div class="card">
                         <div class="card-header">
@@ -488,7 +674,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="packageReportSub" class="report-sub-tab-content">
                     <div class="card">
                         <div class="card-header">
@@ -512,7 +697,6 @@
                         </div>
                     </div>
                 </div>
-
                 <div id="packageCountReportSub" class="report-sub-tab-content">
                     <div class="card">
                         <div class="card-header">
@@ -538,25 +722,43 @@
                         </div>
                     </div>
                 </div>
+                <div id="adminReportSub" class="report-sub-tab-content">
+                    <div class="admin-report-card">
+                        <h2 class="admin-report-title">Admin Report</h2>
+                        <p class="admin-report-desc">See which packages each admin has added within a selected date range.</p>
+                        <hr class="admin-report-divider">
+                        <div class="admin-report-filter-row">
+                            <div class="form-group">
+                                <label class="form-label">Select Admin</label>
+                                <select id="adminReportSelect" class="form-select">
+                                    <option value="">Select Admin</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Start Date</label>
+                                <input type="date" id="adminReportStartDateInput" class="form-input" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">End Date</label>
+                                <input type="date" id="adminReportEndDateInput" class="form-input" />
+                            </div>
+                            <button id="generateAdminReportBtn" class="admin-report-filter-btn">Generate</button>
+                        </div>
+                        <div id="adminReportResults"></div>
+                    </div>
                 </div>
+            </div>
         </div>
     </div>
-
     <div id="notification" class="notification"></div>
-
     <script>
-        // !! IMPORTANT: Replace with your deployed Apps Script Web App URL !!
-        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzQgiOhAH2uFfpZyhnX5syKBKlmr2QOOHqWOdK7UunrWyp2_tvCt0ym4l1pdmI5sEqV/exec';
-
+        const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwqR7EfmnIVv11p_Ld1BeLq9jOYWYh1cRYTJurYqgEIqOFW2W1BPF-GTntamAPIKwTq/exec';
         let packages = [];
         let studentRecords = [];
+        let adminList = [];
         let loading = false;
+        let currentAdminName = null;
 
-        // Admin Login Credentials
-        const ADMIN_NAME = "PCA Admin";
-        const ADMIN_PASSWORD = "PCA@1369";
-
-        // --- Utility Functions ---
         function showNotification(message, type = 'success') {
             const notification = document.getElementById('notification');
             notification.textContent = message;
@@ -565,18 +767,12 @@
                 notification.classList.remove('show');
             }, 3000);
         }
-
         function setLoading(isLoading) {
             loading = isLoading;
-            // Disable all buttons on the dashboard content, but not the login button
             document.querySelectorAll('#dashboard-content .btn').forEach(btn => btn.disabled = isLoading);
-            // Ensure the login button is handled separately
             const loginBtn = document.getElementById('loginBtn');
-            if (loginBtn) { // Check if loginBtn exists before trying to access disabled
-                loginBtn.disabled = isLoading;
-            }
+            if (loginBtn) { loginBtn.disabled = isLoading; }
         }
-
         async function callBackend(data) {
             try {
                 setLoading(true);
@@ -594,22 +790,35 @@
                 setLoading(false);
             }
         }
-
-        // --- Data Loading and UI Updates ---
         async function loadAllData() {
             const result = await callBackend({ action: 'getData' });
             if (result && result.success) {
                 packages = result.data.packages.map(row => ({ id: row[0], name: row[1] }));
                 studentRecords = result.data.students;
+                adminList = result.data.admins || [];
                 updatePackageList();
                 updatePackageSelect();
                 updatePackageSelectForReport();
                 updateStats();
+                updateAdminReportSelect();
             } else if (result && result.message) {
                 showNotification(result.message, 'error');
             }
         }
-
+        function updateAdminReportSelect() {
+            const adminSelect = document.getElementById("adminReportSelect");
+            if (!adminSelect) return;
+            adminSelect.innerHTML = '<option value="">Select Admin</option>';
+            for (let i = 1; i < adminList.length; i++) {
+                const name = adminList[i][0];
+                if (name) {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    adminSelect.appendChild(option);
+                }
+            }
+        }
         function updatePackageList() {
             const packageList = document.getElementById('packageList');
             const packageCount = document.getElementById('packageCount');
@@ -631,7 +840,6 @@
                 packageList.appendChild(div);
             });
         }
-
         function updatePackageSelect() {
             const select = document.getElementById('studentPackage');
             select.innerHTML = '<option value="">Select package</option>';
@@ -642,7 +850,6 @@
                 select.appendChild(option);
             });
         }
-
         function updatePackageSelectForReport() {
             const select = document.getElementById('packageReportSelect');
             select.innerHTML = '<option value="">Select a package</option>';
@@ -653,7 +860,6 @@
                 select.appendChild(option);
             });
         }
-
         function updateStats() {
             const totalStudents = new Set(studentRecords.map(r => r.registrationId)).size;
             const totalPackages = packages.length;
@@ -663,7 +869,6 @@
             document.getElementById('statTotalStudents').textContent = totalStudents;
             document.getElementById('statTotalPackages').textContent = totalPackages;
             document.getElementById('statTotalAssignments').textContent = totalAssignments;
-
             const batchCounts = {};
             ['2025 Batch', '2026 Batch', '2027 Batch'].forEach(batch => {
                 batchCounts[batch] = studentRecords.filter(r => r.batch === batch).length;
@@ -680,13 +885,10 @@
                 batchDistribution.appendChild(div);
             });
         }
-
         function getPackageIdByName(packageName) {
             const pkg = packages.find(p => p.name === packageName);
             return pkg ? pkg.id : '';
         }
-
-        // --- CRUD Operations ---
         async function addPackage(packageData) {
             if (!packageData.id || !packageData.name) {
                 showNotification('Please fill in both Package ID and Package Name.', 'error');
@@ -701,9 +903,8 @@
                 return false;
             }
         }
-
         async function assignStudentPackage(studentData) {
-            if (!studentData.registrationId || !studentData.packageName || !studentData.duration || !studentData.batch) {
+            if (!studentData.registrationId || !studentData.packageName || !studentData.duration || !studentData.batch || !studentData.adminName) {
                 showNotification('Please fill in all fields.', 'error');
                 return false;
             }
@@ -716,7 +917,6 @@
                 return false;
             }
         }
-
         async function saveStudentUpdate(original, parent) {
             const updated = {
                 batch: parent.querySelector('[data-field="batch"]').value,
@@ -726,12 +926,10 @@
                 duration: parent.querySelector('[data-field="duration"]').value,
                 date: parent.querySelector('[data-field="date"]').value
             };
-
             if (!updated.registrationId || !updated.packageName || !updated.duration || !updated.batch || !updated.date) {
                 showNotification('All fields must be filled to update.', 'error');
                 return;
             }
-
             const result = await callBackend({ action: 'updateStudent', updatedData: updated });
             if (result.success) {
                 showNotification(result.message);
@@ -740,7 +938,6 @@
                 showNotification(result.message, 'error');
             }
         }
-
         async function deleteStudentRow(registrationId, container) {
             if (!confirm("Are you sure you want to delete this record?")) return;
             const result = await callBackend({ action: 'deleteStudent', registrationId });
@@ -752,8 +949,6 @@
                 showNotification(result.message, 'error');
             }
         }
-
-        // --- Report Rendering Functions ---
         function renderModifyResults(data) {
             const container = document.getElementById('modifyResults');
             container.innerHTML = '';
@@ -766,19 +961,16 @@
                     `<option value="${pkg.name}"${pkg.name === record.packageName ? ' selected' : ''}>${pkg.name}</option>`
                 ).join('');
                 packageOptions = `<option value="">Select package</option>` + packageOptions;
-
                 const durations = ['3 months', '6 months', '9 months'];
                 let durationOptions = durations.map(d =>
                     `<option value="${d}"${d === record.duration ? ' selected' : ''}>${d}</option>`
                 ).join('');
                 durationOptions = `<option value="">Select duration</option>` + durationOptions;
-
                 const batches = ['2025 Batch', '2026 Batch', '2027 Batch'];
                 let batchOptions = batches.map(b =>
                     `<option value="${b}"${b === record.batch ? ' selected' : ''}>${b}</option>`
                 ).join('');
                 batchOptions = `<option value="">Select batch</option>` + batchOptions;
-
                 const div = document.createElement('div');
                 div.className = 'record-item';
                 div.innerHTML = `
@@ -816,7 +1008,6 @@
                 container.appendChild(div);
             });
         }
-
         function renderReportResults(data) {
             const container = document.getElementById('reportResults');
             container.innerHTML = '';
@@ -838,7 +1029,6 @@
                 container.appendChild(div);
             });
         }
-
         function renderDateReportResults(data) {
             const container = document.getElementById('dateReportResults');
             container.innerHTML = '';
@@ -860,7 +1050,6 @@
                 container.appendChild(div);
             });
         }
-
         function renderPackageReportResults(data) {
             const container = document.getElementById('packageReportResults');
             container.innerHTML = '';
@@ -882,18 +1071,13 @@
                 container.appendChild(div);
             });
         }
-
-        // MODIFIED: Package Count Report Logic
         function generatePackageCountReport(startDate, endDate) {
             const packagesTaken = {};
             let totalPackagesForPeriod = 0;
-
             const start = startDate ? new Date(startDate) : null;
             const end = endDate ? new Date(endDate) : null;
-
             studentRecords.forEach(record => {
-                const recordDate = new Date(record.date); // Assuming record.date is YYYY-MM-DD
-
+                const recordDate = new Date(record.date);
                 let isInRange = true;
                 if (start && recordDate < start) {
                     isInRange = false;
@@ -901,7 +1085,6 @@
                 if (end && recordDate > end) {
                     isInRange = false;
                 }
-
                 if (isInRange) {
                     const packageName = record.packageName;
                     packagesTaken[packageName] = (packagesTaken[packageName] || 0) + 1;
@@ -910,17 +1093,14 @@
             });
             renderPackageCountResults(packagesTaken, totalPackagesForPeriod);
         }
-
         function renderPackageCountResults(packageCounts, totalCount) {
             const container = document.getElementById('packageCountResults');
-            container.innerHTML = ''; // Clear previous results
-
+            container.innerHTML = '';
             if (totalCount === 0) {
                 container.innerHTML = '<p style="color:#9ca3af;">No packages found for the selected period.</p>';
                 return;
             }
-
-            let htmlContent = '<div class="records-list">'; // Use records-list for consistent styling
+            let htmlContent = '<div class="records-list">';
             for (const pkgName in packageCounts) {
                 htmlContent += `
                     <div class="record-item">
@@ -931,8 +1111,7 @@
                     </div>
                 `;
             }
-            htmlContent += '</div>'; // Close records-list
-
+            htmlContent += '</div>';
             htmlContent += `
                 <div style="margin-top: 1.5rem; text-align: right; font-size: 1.2rem; font-weight: bold; color: #f87171; padding-right: 1rem;">
                     Total Packages Taken: ${totalCount}
@@ -940,82 +1119,110 @@
             `;
             container.innerHTML = htmlContent;
         }
-
-
-        // --- Event Listeners and Initial Load ---
+        function renderAdminReportResults(data) {
+            const container = document.getElementById('adminReportResults');
+            if (!data || !data.packageCounts || Object.keys(data.packageCounts).length === 0) {
+                container.innerHTML = `<p style="color:#9ca3af;">No packages found for this admin in the selected period.</p>`;
+                return;
+            }
+            let html = `<div class="admin-report-meta">
+                <span><b>Admin:</b> ${data.admin}</span>
+                <span><b>From:</b> ${data.startDate}</span>
+                <span><b>To:</b> ${data.endDate}</span>
+                </div>
+                <table class="admin-report-table">
+                <thead>
+                    <tr>
+                        <th>Package Name</th>
+                        <th>Count</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            for (const [pkg, count] of Object.entries(data.packageCounts)) {
+                html += `<tr>
+                    <td>${pkg}</td>
+                    <td>${count}</td>
+                </tr>`;
+            }
+            html += `</tbody></table>
+                <div class="admin-report-total">
+                    Total Packages Added: ${data.totalCount}
+                </div>`;
+            container.innerHTML = html;
+        }
         document.addEventListener('DOMContentLoaded', () => {
-            // Get references to login and dashboard elements
             const loginPage = document.getElementById('login-page');
             const dashboardContent = document.getElementById('dashboard-content');
             const adminNameInput = document.getElementById('adminName');
             const adminPasswordInput = document.getElementById('adminPassword');
             const loginBtn = document.getElementById('loginBtn');
             const loginMessage = document.getElementById('loginMessage');
+            loginPage.style.display = 'flex';
+            dashboardContent.style.display = 'none';
 
-            // Set initial display state
-            loginPage.style.display = 'flex'; // Show login
-            dashboardContent.style.display = 'none'; // Hide dashboard
-
-            // Login Button Listener
-            loginBtn.addEventListener('click', () => {
+            loginBtn.addEventListener('click', async () => {
                 const enteredAdminName = adminNameInput.value.trim();
                 const enteredPassword = adminPasswordInput.value.trim();
-
-                if (enteredAdminName === ADMIN_NAME && enteredPassword === ADMIN_PASSWORD) {
-                    loginPage.style.display = 'none'; // Hide login page
-                    dashboardContent.style.display = 'block'; // Show dashboard content
-                    loadAllData(); // Load dashboard data after successful login
-                    showNotification('Welcome, Admin!', 'success');
-                } else {
-                    loginMessage.textContent = "You are not an admin! Go on, shoo!"; // Funny comment
-                    loginMessage.style.color = '#ef4444'; // Red color for error
+                try {
+                    setLoading(true);
+                    const res = await fetch(APPS_SCRIPT_URL, {
+                        method: 'POST',
+                        body: JSON.stringify({
+                            action: 'login',
+                            username: enteredAdminName,
+                            password: enteredPassword
+                        })
+                    });
+                    const result = await res.json();
+                    if (result.success) {
+                        currentAdminName = enteredAdminName;
+                        loginPage.style.display = 'none';
+                        dashboardContent.style.display = 'block';
+                        await loadAllData();
+                        showNotification('Welcome, Admin!', 'success');
+                    } else {
+                        loginMessage.textContent = "Invalid admin credentials!";
+                        loginMessage.style.color = '#ef4444';
+                    }
+                } catch (e) {
+                    loginMessage.textContent = "Login failed. Try again.";
+                    loginMessage.style.color = '#ef4444';
+                } finally {
+                    setLoading(false);
                 }
             });
-
-            // Allow pressing Enter in password field to log in
             adminPasswordInput.addEventListener('keypress', (event) => {
                 if (event.key === 'Enter') {
-                    loginBtn.click(); // Simulate click on login button
+                    loginBtn.click();
                 }
             });
-
-            // Main tabs functionality
             document.querySelectorAll('.tab-button').forEach(button => {
                 button.addEventListener('click', function () {
                     document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                     this.classList.add('active');
                     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                     document.getElementById(this.dataset.tab).classList.add('active');
-
-                    // If the "Reports" tab is activated, ensure the first sub-tab is also active
                     if (this.dataset.tab === 'reports') {
                         const firstSubTabButton = document.querySelector('#reports .report-sub-tab-button');
                         const firstSubTabContent = document.querySelector('#reports .report-sub-tab-content');
                         if (firstSubTabButton && firstSubTabContent) {
-                            // Deactivate all sub-tab buttons and content first
                             document.querySelectorAll('#reports .report-sub-tab-button').forEach(btn => btn.classList.remove('active'));
                             document.querySelectorAll('#reports .report-sub-tab-content').forEach(content => content.classList.remove('active'));
-                            // Activate the first sub-tab
                             firstSubTabButton.classList.add('active');
                             firstSubTabContent.classList.add('active');
                         }
                     }
                 });
             });
-
-            // Sub-tabs functionality for Reports
             document.querySelectorAll('.report-sub-tab-button').forEach(button => {
                 button.addEventListener('click', function () {
                     const parentTabContent = this.closest('.tab-content');
                     parentTabContent.querySelectorAll('.report-sub-tab-button').forEach(btn => btn.classList.remove('active'));
                     parentTabContent.querySelectorAll('.report-sub-tab-content').forEach(content => content.classList.remove('active'));
-
                     this.classList.add('active');
                     document.getElementById(this.dataset.subTab).classList.add('active');
                 });
             });
-
-            // Add Package Event Listener
             document.getElementById('addPackageBtn').addEventListener('click', async () => {
                 const id = document.getElementById('packageId').value;
                 const name = document.getElementById('packageName').value;
@@ -1025,14 +1232,13 @@
                     await loadAllData();
                 }
             });
-
-            // Assign Package Event Listener
             document.getElementById('assignPackageBtn').addEventListener('click', async () => {
                 const studentData = {
                     registrationId: document.getElementById('studentRegId').value,
                     packageName: document.getElementById('studentPackage').value,
                     duration: document.getElementById('studentDuration').value,
-                    batch: document.getElementById('studentBatch').value
+                    batch: document.getElementById('studentBatch').value,
+                    adminName: currentAdminName
                 };
                 if (await assignStudentPackage(studentData)) {
                     document.getElementById('studentRegId').value = '';
@@ -1042,8 +1248,6 @@
                     await loadAllData();
                 }
             });
-
-            // Search Modify Event Listener
             document.getElementById('searchModifyBtn').addEventListener('click', async () => {
                 const regId = document.getElementById('modifySearchId').value;
                 if (!regId) {
@@ -1057,8 +1261,6 @@
                     showNotification(result.message, 'error');
                 }
             });
-
-            // Generate Student Report Event Listener
             document.getElementById('generateReportBtn').addEventListener('click', async () => {
                 const regId = document.getElementById('reportSearchId').value;
                 const result = await callBackend({ action: 'searchStudent', registrationId: regId });
@@ -1068,8 +1270,6 @@
                     showNotification(result.message, 'error');
                 }
             });
-
-            // Generate Date Report Event Listener
             document.getElementById('generateDateReportBtn').addEventListener('click', async () => {
                 const date = document.getElementById('dateReportInput').value;
                 if (!date) {
@@ -1083,8 +1283,6 @@
                     showNotification(result.message, 'error');
                 }
             });
-
-            // Generate Package Report Event Listener
             document.getElementById('generatePackageReportBtn').addEventListener('click', async () => {
                 const selectedPackageName = document.getElementById('packageReportSelect').value;
                 if (!selectedPackageName) {
@@ -1094,18 +1292,34 @@
                 const filteredRecords = studentRecords.filter(record => record.packageName === selectedPackageName);
                 renderPackageReportResults(filteredRecords);
             });
-
-            // MODIFIED: Generate Package Count Report Event Listener
             document.getElementById('generatePackageCountBtn').addEventListener('click', () => {
                 const startDate = document.getElementById('packageCountStartDateInput').value;
                 const endDate = document.getElementById('packageCountEndDateInput').value;
-
                 if (!startDate && !endDate) {
                     showNotification('Please select at least a Start Date or End Date for Package Count.', 'error');
                     return;
                 }
-                
                 generatePackageCountReport(startDate, endDate);
+            });
+            document.getElementById('generateAdminReportBtn').addEventListener('click', async () => {
+                const adminName = document.getElementById('adminReportSelect').value;
+                const startDate = document.getElementById('adminReportStartDateInput').value;
+                const endDate = document.getElementById('adminReportEndDateInput').value;
+                if (!adminName || !startDate || !endDate) {
+                    showNotification('Please select admin and date range.', 'error');
+                    return;
+                }
+                const result = await callBackend({
+                    action: 'getAdminReport',
+                    adminName,
+                    startDate,
+                    endDate
+                });
+                if (result.success) {
+                    renderAdminReportResults(result.data);
+                } else {
+                    showNotification(result.message, 'error');
+                }
             });
         });
     </script>
